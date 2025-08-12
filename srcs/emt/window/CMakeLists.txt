@@ -6,7 +6,7 @@ file(GLOB_RECURSE srcs
 add_library(emt-window STATIC ${srcs})
 add_library(emt::window ALIAS emt-window)
 
-get_filename_component(include_dir "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+get_filename_component(include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 
 target_include_directories(emt-window PUBLIC "${include_dir}")
 

@@ -5,6 +5,10 @@ project(emt-window LANGUAGES C CXX
         DESCRIPTION "window api wrapper"
 )
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 add_subdirectory(srcs/emt/window)
 
 add_subdirectory(srcs/example)
