@@ -74,8 +74,8 @@ struct rect
 {
     uint32 x;
     uint32 y;
-    uint32 cx;
-    uint32 cy;
+    uint32 width;
+    uint32 height;
 };
 
 struct window_event
