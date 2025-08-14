@@ -4,19 +4,22 @@
 namespace emt
 {
 wnd::wnd(wnd *parent)
+    : m_parent(parent), m_text("win32++")
 {
+    m_rect = {0, 0, 0, 0};
 }
 
 wnd::wnd(wnd *parent, uint x, uint y, uint cx, uint cy, const char *text)
+    : m_parent(parent), m_text(text)
 {
     m_rect = {x, y, cx, cy};
 }
 
 wnd::~wnd()
 {
-    if (m_hwnd)
-        DestroyWindow(m_hwnd);
-    // TODO remove class name from static
+    safe_delete_gdiobj(m_brush);
+    safe_delete_gdiobj(m_font);
+    safe_delete_wnd(m_hwnd);
 }
 
 void wnd::create()
@@ -30,22 +33,60 @@ void wnd::create()
     wc.lpszClassName = "win32++";
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.hIcon = nullptr;
+    wc.lpfnWndProc = wnd::global_wnd_proc;
 
-    ATOM res = RegisterClassExA(&wc);
+    pre_register(&wc);
+
+    BOOL is_exist = GetClassInfoExA(wc.hInstance, wc.lpszClassName, &wc);
+
+    if (!is_exist)
+    {
+        ATOM res = RegisterClassExA(&wc);
+
+        if (!res)
+        {
+            DebugBreak();
+            OutputDebugStringA("failed to register class");
+        }
+    }
+
+    HWND parent_hwnd{};
+    if (m_parent && m_parent->m_hwnd)
+    {
+        parent_hwnd = m_parent->m_hwnd;
+    }
 
     // TODO CS for static passing to args
     CREATESTRUCTA cs{};
     cs.lpszClass = wc.lpszClassName;
     cs.hInstance = wc.hInstance;
-    cs.hwndParent = m_parent ? m_parent->m_hwnd : nullptr; // has parent
+    cs.hwndParent = parent_hwnd;
     cs.hMenu = 0;
-    cs.lpszClass = wc.lpszClassName;
     cs.dwExStyle = NULL;
     cs.lpszName = m_text.c_str();
     cs.x = m_rect.x;
     cs.y = m_rect.y;
     cs.cx = m_rect.width;
     cs.cy = m_rect.height;
+    cs.style = NULL;
+
+    pre_create(&cs);
+
+    if (m_parent)
+    {
+        cs.style &= ~WS_POPUP;
+        cs.style |= WS_CHILD;
+    }
+    else
+    {
+        cs.style &= ~WS_CHILD;
+        if ((cs.style & (WS_OVERLAPPEDWINDOW)) == 0)
+        {
+            cs.style |= WS_POPUP;
+        }
+    }
+
+    // TODO hook pre create
 
     m_hwnd = CreateWindowExA(
         cs.dwExStyle,
@@ -56,6 +97,21 @@ void wnd::create()
         cs.hwndParent,
         cs.hMenu,
         cs.hInstance, this); // custom pointer "this == Wnd"
+}
+
+void wnd::pre_register(WNDCLASSEXA *wc)
+{
+    unused(wc);
+}
+
+void wnd::pre_create(CREATESTRUCT *cs)
+{
+    unused(cs);
+}
+
+LRESULT wnd::local_wnd_proc(UINT msg, WPARAM wp, LPARAM lp)
+{
+    return DefWindowProc(m_hwnd, msg, wp, lp);
 }
 
 LRESULT wnd::global_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)

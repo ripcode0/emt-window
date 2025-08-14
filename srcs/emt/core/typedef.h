@@ -59,13 +59,35 @@ struct HBRUSH__;
 typedef HBRUSH__ *HBRUSH;
 struct HGLRC__;
 typedef HGLRC__ *HGLRC;
+struct HFONT__;
+typedef HFONT__ *HFONT;
+
 #endif
 
-// clang-format on
+struct tagCREATESTRUCTA;
+struct tagCREATESTRUCTW;
+
+#ifdef UNICODE
+using CREATESTRUCT = tagCREATESTRUCTW; 
+#else
+using CREATESTRUCT = tagCREATESTRUCTA;
+#endif
+
+struct tagWNDCLASSEXA;
+typedef tagWNDCLASSEXA WNDCLASSEXA;
+
 
 #include <stdint.h>
 typedef uint32_t uint, uint32;
 typedef unsigned char byte, uint8;
+
+// Window API defined
+
+#define safe_delete_gdiobj(x)   if(x)   { ::DeleteObject(x); x = nullptr; }
+#define safe_delete_wnd(x)      if(x)   { ::DestroyWindow(x); x = nullptr; }
+#define unused(x)               (void)(x)
+
+// clang-format on
 
 // emt window type
 namespace emt

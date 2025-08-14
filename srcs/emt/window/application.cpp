@@ -14,6 +14,7 @@ int application::exec()
         {
             if (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE)
             {
+                PostQuitMessage(0);
                 m_is_running = false;
             }
             ::TranslateMessage(&msg);
