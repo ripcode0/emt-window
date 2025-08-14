@@ -2,4 +2,5 @@
 [Ee]xternal/
 [Bb]in/
 .vscode/
-[Rr]ef
+[Rr]ef/
+update-git.cmd
