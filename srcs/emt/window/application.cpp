@@ -3,6 +3,10 @@
 
 namespace emt
 {
+application::application(int args, char *argv[])
+{
+}
+
 int application::exec()
 {
     // event messages

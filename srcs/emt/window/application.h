@@ -5,7 +5,7 @@ namespace emt
 class application
 {
 public:
-    application() = default;
+    application(int args, char *argv[]);
     // executions
     int exec();
 

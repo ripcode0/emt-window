@@ -11,4 +11,5 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(srcs/emt/window)
 
-add_subdirectory(srcs/example)
+# add_subdirectory(srcs/example)
+add_executable(game ref/cmd_prog.cpp)

@@ -41,7 +41,9 @@ void wnd::create()
 
     if (!is_exist)
     {
+        SetLastError(0);
         ATOM res = RegisterClassExA(&wc);
+        DWORD e = GetLastError();
 
         if (!res)
         {
@@ -97,6 +99,13 @@ void wnd::create()
         cs.hwndParent,
         cs.hMenu,
         cs.hInstance, this); // custom pointer "this == Wnd"
+
+    if (!m_hwnd)
+    {
+
+        auto e = GetLastError();
+        int a = 0;
+    }
 }
 
 void wnd::pre_register(WNDCLASSEXA *wc)
@@ -109,17 +118,53 @@ void wnd::pre_create(CREATESTRUCT *cs)
     unused(cs);
 }
 
+LRESULT wnd::on_nccreate(CREATESTRUCT *cs)
+{
+    unused(cs);
+    return TRUE;
+}
+
+LRESULT wnd::on_create(CREATESTRUCT *cs)
+{
+    unused(cs);
+    return 0;
+}
+
 LRESULT wnd::local_wnd_proc(UINT msg, WPARAM wp, LPARAM lp)
 {
+    switch (msg)
+    {
+    case WM_CREATE:
+    {
+        LPCREATESTRUCT cs = reinterpret_cast<LPCREATESTRUCT>(lp);
+        return on_create(cs);
+    }
+
+    default:
+        break;
+    }
     return DefWindowProc(m_hwnd, msg, wp, lp);
 }
 
 LRESULT wnd::global_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    // TODO get per object
-    // Wnd* currentWnd = from lp
+    // returns nullptr if not registered
+    emt::wnd *wnd = (emt::wnd *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
-    // let them passing to default window event queue
+    if (WM_NCCREATE == msg)
+    {
+        LPCREATESTRUCT cs = reinterpret_cast<LPCREATESTRUCT>(lp);
+        wnd = (emt::wnd *)cs->lpCreateParams;
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)wnd);
+        wnd->m_hwnd = hwnd;
+
+        LRESULT res = wnd->on_nccreate(cs);
+        return res;
+    }
+
+    if (wnd)
+        return wnd->local_wnd_proc(msg, wp, lp);
+
     return ::DefWindowProc(hwnd, msg, wp, lp);
 }
 

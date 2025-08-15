@@ -18,8 +18,22 @@ public:
     void show();
 
 protected:
+    /// @brief Called before the window class is registered with RegisterClassExA.
+    ///        Allows modification of the WNDCLASSEXA structure (styles, icons, cursor, etc.)
+    ///        before registration.
+    /// @param wc Pointer to the WNDCLASSEXA structure to be filled or adjusted.
     virtual void pre_register(WNDCLASSEXA *wc);
     virtual void pre_create(CREATESTRUCT *cs);
+
+    /// @brief Handles WM_NCCREATE before the client area is created.
+    ///        Commonly used to store the 'this' pointer with GWLP_USERDATA.
+    /// @param cs Pointer to CREATESTRUCT containing creation parameters.
+    /// @return TRUE to continue creation, FALSE to abort.
+    virtual LRESULT on_nccreate(CREATESTRUCT *cs);
+    /// @brief When CreateWindowEx is called, the system sends WM_NCCCREATE first then WM_CREATE
+    /// @param cs Pointer to a CREATESTRUCT
+    /// @return 0 : success (wiindow creation continue.) -1 : failure CreateWindowEx returns NULL
+    virtual LRESULT on_create(CREATESTRUCT *cs);
 
     virtual LRESULT WINAPI local_wnd_proc(UINT msg, WPARAM wp, LPARAM lp);
 
