@@ -10,6 +10,4 @@ get_filename_component(include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 
 target_include_directories(emt-window PUBLIC "${include_dir}")
 
-get_target_property(dir emt-window INCLUDE_DIRECTORIES)
-
-message(STATUS "${dir}")
+target_link_libraries(emt-window PRIVATE gdiplus d2d1 dwrite)

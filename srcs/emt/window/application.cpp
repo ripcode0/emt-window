@@ -1,9 +1,17 @@
 #include "application.h"
-#include "window_config.h"
+#include "gdi_plus.h"
+#include "wnd_config.h"
+#include "d2d.h"
 
 namespace emt
 {
-application::application(int args, char *argv[])
+application::application(int args, char* argv[])
+{
+    gdi_plus::initialize();
+    d2d::initialize();
+}
+
+application::~application()
 {
 }
 

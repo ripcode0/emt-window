@@ -1,15 +1,17 @@
 #include "wnd.h"
-#include "window_config.h"
+#include "painter.h"
+#include "wnd_config.h"
+#include <assert.h>
 
 namespace emt
 {
-wnd::wnd(wnd *parent)
+wnd::wnd(wnd* parent)
     : m_parent(parent), m_text("win32++")
 {
     m_rect = {0, 0, 0, 0};
 }
 
-wnd::wnd(wnd *parent, uint x, uint y, uint cx, uint cy, const char *text)
+wnd::wnd(wnd* parent, uint x, uint y, uint cx, uint cy, const char* text)
     : m_parent(parent), m_text(text)
 {
     m_rect = {x, y, cx, cy};
@@ -41,10 +43,7 @@ void wnd::create()
 
     if (!is_exist)
     {
-        SetLastError(0);
         ATOM res = RegisterClassExA(&wc);
-        DWORD e = GetLastError();
-
         if (!res)
         {
             DebugBreak();
@@ -64,13 +63,13 @@ void wnd::create()
     cs.hInstance = wc.hInstance;
     cs.hwndParent = parent_hwnd;
     cs.hMenu = 0;
-    cs.dwExStyle = NULL;
+    cs.dwExStyle = 0;
     cs.lpszName = m_text.c_str();
     cs.x = m_rect.x;
     cs.y = m_rect.y;
-    cs.cx = m_rect.width;
-    cs.cy = m_rect.height;
-    cs.style = NULL;
+    cs.cx = m_rect.cx;
+    cs.cy = m_rect.cy;
+    cs.style = 0;
 
     pre_create(&cs);
 
@@ -98,35 +97,44 @@ void wnd::create()
         cs.x, cs.y, cs.cx, cs.cy,
         cs.hwndParent,
         cs.hMenu,
-        cs.hInstance, this); // custom pointer "this == Wnd"
+        cs.hInstance, this);
 
-    if (!m_hwnd)
-    {
-
-        auto e = GetLastError();
-        int a = 0;
-    }
+    assert(m_hwnd);
 }
 
-void wnd::pre_register(WNDCLASSEXA *wc)
+void wnd::pre_register(WNDCLASSEXA* wc)
 {
     unused(wc);
 }
 
-void wnd::pre_create(CREATESTRUCT *cs)
+void wnd::pre_create(CREATESTRUCT* cs)
 {
     unused(cs);
 }
 
-LRESULT wnd::on_nccreate(CREATESTRUCT *cs)
+LRESULT wnd::on_nccreate(CREATESTRUCT* cs)
 {
     unused(cs);
     return TRUE;
 }
 
-LRESULT wnd::on_create(CREATESTRUCT *cs)
+LRESULT wnd::on_create(CREATESTRUCT* cs)
 {
+    printf("ccc\n");
     unused(cs);
+    return 0;
+}
+
+LRESULT wnd::on_paint(painter* painter)
+{
+    unused(painter);
+    return 0;
+}
+
+LRESULT wnd::on_resize(size_event* evt)
+{
+    printf("hhh\n");
+    unused(evt);
     return 0;
 }
 
@@ -139,6 +147,25 @@ LRESULT wnd::local_wnd_proc(UINT msg, WPARAM wp, LPARAM lp)
         LPCREATESTRUCT cs = reinterpret_cast<LPCREATESTRUCT>(lp);
         return on_create(cs);
     }
+    case WM_PAINT:
+    {
+        printf("wm_paint %s\n", get_text());
+        if (!m_enable_paint)
+            break;
+        painter p(m_hwnd);
+        return on_paint(&p);
+    }
+    case WM_SIZE:
+    {
+        size_event evt{};
+        evt.cx = static_cast<uint32_t>(LOWORD(lp));
+        evt.cy = static_cast<uint32_t>(HIWORD(lp));
+        evt.state = (emt::size_state)(wp);
+
+        if (on_resize(&evt) == 0)
+            return 0;
+        break;
+    }
 
     default:
         break;
@@ -149,17 +176,14 @@ LRESULT wnd::local_wnd_proc(UINT msg, WPARAM wp, LPARAM lp)
 LRESULT wnd::global_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     // returns nullptr if not registered
-    emt::wnd *wnd = (emt::wnd *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    emt::wnd* wnd = (emt::wnd*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
     if (WM_NCCREATE == msg)
     {
         LPCREATESTRUCT cs = reinterpret_cast<LPCREATESTRUCT>(lp);
-        wnd = (emt::wnd *)cs->lpCreateParams;
+        wnd = (emt::wnd*)cs->lpCreateParams;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)wnd);
         wnd->m_hwnd = hwnd;
-
-        LRESULT res = wnd->on_nccreate(cs);
-        return res;
     }
 
     if (wnd)
@@ -172,6 +196,14 @@ void wnd::show()
 {
     if (m_hwnd)
         ::ShowWindow(m_hwnd, SW_SHOW);
+}
+
+const char* wnd::get_text() const
+{
+    thread_local static char buffer[1024];
+    int len = ::GetWindowTextA(m_hwnd, buffer, sizeof(buffer));
+    buffer[len] = '\0';
+    return buffer;
 }
 
 } // namespace emt
