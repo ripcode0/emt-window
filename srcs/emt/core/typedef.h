@@ -18,6 +18,7 @@ typedef int             BOOL;
 typedef unsigned char   BYTE;
 typedef unsigned short  WORD;
 typedef float           FLOAT;
+typedef long            LONG;
 
 typedef void            *LPVOID;
 typedef const char      *LPCSTR;
@@ -42,6 +43,7 @@ typedef char            *LPSTR;
     typedef unsigned long ULONG_PTR;
 #endif
 
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
 typedef LONG_PTR LRESULT;
@@ -61,6 +63,12 @@ struct HGLRC__;
 typedef HGLRC__ *HGLRC;
 struct HFONT__;
 typedef HFONT__ *HFONT;
+struct HPEN__;
+typedef HPEN__ *HPEN;
+
+typedef HANDLE HGDIOBJ;
+
+typedef DWORD COLORREF;
 
 #endif
 
@@ -76,28 +84,74 @@ using CREATESTRUCT = tagCREATESTRUCTA;
 struct tagWNDCLASSEXA;
 typedef tagWNDCLASSEXA WNDCLASSEXA;
 
+struct tagRECT;
+typedef struct tagRECT RECT;
+
 
 #include <stdint.h>
 typedef uint32_t uint, uint32;
 typedef unsigned char byte, uint8;
 
+// D2D1 Dwrite
+
+struct ID2D1Factory;
+struct IDWriteFactory;
+struct ID2D1HwndRenderTarget;
+struct ID2D1SolidColorBrush;
+struct IDWriteTextFormat;
+
+
 // Window API defined
 
 #define safe_delete_gdiobj(x)   if(x)   { ::DeleteObject(x); x = nullptr; }
 #define safe_delete_wnd(x)      if(x)   { ::DestroyWindow(x); x = nullptr; }
+#define safe_release(x)         if(x)   { x->Release(); x = nullptr; }
 #define unused(x)               (void)(x)
+
+// typedef struct tagRECT {
+//     LONG left;
+//     LONG top;
+//     LONG right;
+//     LONG bottom;
+// } RECT;
 
 // clang-format on
 
 // emt window type
 namespace emt
 {
+class painter;
+struct d2d_painter;
+struct d2d_render_context;
 struct rect
 {
     uint32 x;
     uint32 y;
-    uint32 width;
-    uint32 height;
+    uint32 cx;
+    uint32 cy;
+};
+
+struct pointf
+{
+    float x;
+    float y;
+};
+
+struct colorf
+{
+    colorf(float r, float g, float b, float a = 1.f) : r(r), g(g), b(b), a(a) {}
+
+    operator COLORREF() const
+    {
+        BYTE R = BYTE(r * 255);
+        BYTE G = BYTE(g * 255);
+        BYTE B = BYTE(b * 255);
+        return ((DWORD)R | (DWORD)G << 8 | (DWORD)B << 16);
+    }
+    float r;
+    float g;
+    float b;
+    float a;
 };
 
 struct window_event
@@ -105,6 +159,31 @@ struct window_event
     UINT msg;
     WPARAM wp;
     LPARAM lp;
+};
+
+// experimental
+enum class size_state : unsigned int
+{
+    restored = 0,
+    minimized = 1,
+    maximized = 2,
+    maxshow = 3,
+    maxhide = 4,
+    unknown = 5
+};
+
+enum class wnd_type : unsigned int
+{
+    defualt,
+    subclass,
+    superclass
+};
+
+struct size_event
+{
+    uint32 cx;
+    uint32 cy;
+    size_state state;
 };
 
 } // namespace emt
