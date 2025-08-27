@@ -14,10 +14,13 @@ public:
 
     // TODO : create func
 
-    void create();
+    virtual void create();
 
     void show();
     const char* get_text() const;
+    virtual wnd_type get_type() const;
+    bool is_control() const;
+    rect get_client_rect() const;
 
 protected:
     /// @brief Called before the window class is registered with RegisterClassExA.
@@ -41,7 +44,7 @@ protected:
     virtual LRESULT on_resize(size_event* evt);
 
     virtual LRESULT WINAPI local_wnd_proc(UINT msg, WPARAM wp, LPARAM lp);
-
+    virtual LRESULT local_def_wnd_proc(UINT msg, WPARAM wp, LPARAM lp);
     static LRESULT WINAPI global_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 
     wnd* m_parent{};
@@ -50,6 +53,8 @@ protected:
     HBRUSH m_brush{};
     HFONT m_font{};
     std::string m_text;
+    // wnd_type m_type;
+    std::string m_class_name;
 
     bool m_enable_paint = false;
     struct

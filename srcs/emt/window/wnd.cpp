@@ -6,13 +6,17 @@
 namespace emt
 {
 wnd::wnd(wnd* parent)
-    : m_parent(parent), m_text("win32++")
+    : m_parent(parent),
+      m_text("win32++"),
+      m_class_name("win32++")
 {
     m_rect = {0, 0, 0, 0};
 }
 
 wnd::wnd(wnd* parent, uint x, uint y, uint cx, uint cy, const char* text)
-    : m_parent(parent), m_text(text)
+    : m_parent(parent),
+      m_text(text),
+      m_class_name("win32++")
 {
     m_rect = {x, y, cx, cy};
 }
@@ -32,7 +36,7 @@ void wnd::create()
     wc.hbrBackground = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hInstance = GetModuleHandleA(nullptr);
-    wc.lpszClassName = "win32++";
+    wc.lpszClassName = m_class_name.c_str();
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.hIcon = nullptr;
     wc.lpfnWndProc = wnd::global_wnd_proc;
@@ -43,12 +47,7 @@ void wnd::create()
 
     if (!is_exist)
     {
-        ATOM res = RegisterClassExA(&wc);
-        if (!res)
-        {
-            DebugBreak();
-            OutputDebugStringA("failed to register class");
-        }
+        assert_msg(RegisterClassExA(&wc), "failed to register %s class", wc.lpszClassName);
     }
 
     HWND parent_hwnd{};
@@ -99,7 +98,7 @@ void wnd::create()
         cs.hMenu,
         cs.hInstance, this);
 
-    assert(m_hwnd);
+    assert_msg(m_hwnd, "failed to create window");
 }
 
 void wnd::pre_register(WNDCLASSEXA* wc)
@@ -170,7 +169,12 @@ LRESULT wnd::local_wnd_proc(UINT msg, WPARAM wp, LPARAM lp)
     default:
         break;
     }
-    return DefWindowProc(m_hwnd, msg, wp, lp);
+    return local_def_wnd_proc(msg, wp, lp);
+}
+
+LRESULT wnd::local_def_wnd_proc(UINT msg, WPARAM wp, LPARAM lp)
+{
+    return ::DefWindowProc(m_hwnd, msg, wp, lp);
 }
 
 LRESULT wnd::global_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -204,6 +208,27 @@ const char* wnd::get_text() const
     int len = ::GetWindowTextA(m_hwnd, buffer, sizeof(buffer));
     buffer[len] = '\0';
     return buffer;
+}
+
+wnd_type wnd::get_type() const
+{
+    return wnd_type::defualt;
+}
+
+bool wnd::is_control() const
+{
+    if (get_type() == wnd_type::defualt)
+        return false;
+    return true;
+}
+
+rect wnd::get_client_rect() const
+{
+    RECT rc{};
+    ::GetClientRect(m_hwnd, &rc);
+
+    return {(uint32)rc.left, (uint32)rc.top, ((uint32)rc.right - rc.left),
+            ((uint32)rc.bottom - rc.top)};
 }
 
 } // namespace emt

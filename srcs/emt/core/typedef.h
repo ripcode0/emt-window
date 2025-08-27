@@ -18,6 +18,7 @@ typedef int             BOOL;
 typedef unsigned char   BYTE;
 typedef unsigned short  WORD;
 typedef float           FLOAT;
+typedef long            LONG;
 
 typedef void            *LPVOID;
 typedef const char      *LPCSTR;
@@ -42,6 +43,7 @@ typedef char            *LPSTR;
     typedef unsigned long ULONG_PTR;
 #endif
 
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
 typedef LONG_PTR LRESULT;
@@ -55,14 +57,16 @@ struct HINSTANCE__;
 typedef HINSTANCE__ *HINSTANCE;
 struct HDC__;
 typedef HDC__ *HDC;
-// struct HGDIOBJ__;
-// typedef HGDIOBJ__ *HGDIOBJ;
 struct HBRUSH__;
 typedef HBRUSH__ *HBRUSH;
 struct HGLRC__;
 typedef HGLRC__ *HGLRC;
 struct HFONT__;
 typedef HFONT__ *HFONT;
+struct HPEN__;
+typedef HPEN__ *HPEN;
+
+typedef HANDLE HGDIOBJ;
 
 typedef DWORD COLORREF;
 
@@ -104,12 +108,21 @@ struct IDWriteTextFormat;
 #define safe_release(x)         if(x)   { x->Release(); x = nullptr; }
 #define unused(x)               (void)(x)
 
+// typedef struct tagRECT {
+//     LONG left;
+//     LONG top;
+//     LONG right;
+//     LONG bottom;
+// } RECT;
+
 // clang-format on
 
 // emt window type
 namespace emt
 {
 class painter;
+struct d2d_painter;
+struct d2d_render_context;
 struct rect
 {
     uint32 x;
@@ -118,10 +131,17 @@ struct rect
     uint32 cy;
 };
 
+struct pointf
+{
+    float x;
+    float y;
+};
+
 struct colorf
 {
     colorf(float r, float g, float b, float a = 1.f) : r(r), g(g), b(b), a(a) {}
-    operator COLORREF()
+
+    operator COLORREF() const
     {
         BYTE R = BYTE(r * 255);
         BYTE G = BYTE(g * 255);
@@ -150,6 +170,13 @@ enum class size_state : unsigned int
     maxshow = 3,
     maxhide = 4,
     unknown = 5
+};
+
+enum class wnd_type : unsigned int
+{
+    defualt,
+    subclass,
+    superclass
 };
 
 struct size_event
